@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Descarga aleatoria</title>
+  <script>
+    const files = [
+      "https://drive.google.com/uc?export=download&id=12W8l6etNiwjZBDrHeSEGOvDqRuUDX22x",
+      "https://drive.google.com/uc?export=download&id=1dEGaJpXh1oNgzW5C0kSN506VbN9o7nfq",
+      "https://drive.google.com/uc?export=download&id=1QGSdVVeD9ya_v6HZRneWLXz4gt8A4Mgp"
+    ];
+    window.location.href = files[Math.floor(Math.random() * files.length)];
+  </script>
+</head>
+<body>
+  <p>Redirigiendo a un archivo aleatorio...</p>
+</body>
+</html>

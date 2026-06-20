@@ -79,12 +79,12 @@ Sintaxis en el patch:
 ### Comprar
 | Componente | Cantidad | Especificación |
 |------------|----------|----------------|
-| Fuente de alimentación | 1 | 24V, 6A continuos / 9A pico mínimo |
+| [Fuente de alimentación](https://www.mercadolibre.com.ar/fuente-switching-ac-220v-salida-dc-24v-9a-step-down-acdc/up/MLAU305969109) | 1 | 24V, 6A continuos / 9A pico mínimo |
 | Exciters (transductores full range) | 2 | 50mm, 4 ohm, 25W RMS |
 | Condensadores bipolares | 2 | 47µF, 25V o 50V — van en serie con cada exciter para filtrar graves |
 | Cable audio | 1 | Miniplug 3.5mm macho a macho, 1.5-2m |
 | Cable de conexión | 2m | 18-20 AWG rojo y negro |
-| Placa de sonido USB | 1 | Ditron SK-USB.EXT |
+| [Placa de sonido USB — Ditron SK-USB.EXT](https://www.mercadolibre.com.ar/placa-de-sonido-externa-usb-ditron-71-para-pc-y-notebook/p/MLA29399488) | 1 | Ditron SK-USB.EXT |
 | MOSFET | 1 | IRL520N o IRLZ44N |
 | Resistencia | 1 | 1kΩ |
 | Resistencia pull-down | 1 | 10kΩ |

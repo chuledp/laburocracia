@@ -104,3 +104,6 @@ Amp SALIDA L → [47µF] → Exciter L
 Amp SALIDA R → [47µF] → Exciter R
 Amp SALIDA SUB → Bass shaker BS250 (directo, sin condensador)
 ```
+
+
+file:///Users/juliandipietro/Downloads/laburocracia_1.html

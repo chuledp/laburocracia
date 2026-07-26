@@ -208,24 +208,29 @@ def generar_vista_planta():
     cartel_x0 = (SOMMIER_ANCHO - BASE_ANCHO) / 2  # centrado en X
     cartel_y0 = cabecera_y - CARTEL_OFFSET_CABECERA  # corrido hacia adentro
 
-    # Base de acrílico (vista desde arriba = rectángulo muy fino)
+    # Base de acrilico (vista desde arriba = marco transparente sin relleno color)
     base_rect = mpatches.Rectangle(
         (cartel_x0, cartel_y0 - 0.03), BASE_ANCHO, 0.03,
-        facecolor=COLOR_CARTEL_BASE, edgecolor='black', linewidth=1.2
+        facecolor='none', edgecolor='black', linewidth=1.2
     )
     ax.add_patch(base_rect)
 
+    # Linea roja LED iluminando HACIA EL COLCHON (borde inferior en planta)
+    ax.plot([cartel_x0 + (BASE_ANCHO - CARTEL_ANCHO)/2, cartel_x0 + (BASE_ANCHO + CARTEL_ANCHO)/2],
+            [cartel_y0 - 0.03, cartel_y0 - 0.03],
+            color=COLOR_CARTEL_NEON, linewidth=2.5, solid_capstyle='round')
+
     # Texto indicador del cartel
-    ax.text(SOMMIER_ANCHO / 2, cartel_y0 - 0.015,
-            '-- CARTEL LED "LABUROCRACIA" (proyeccion) --',
-            ha='center', va='center', fontsize=7, color=COLOR_CARTEL_NEON,
+    ax.text(SOMMIER_ANCHO / 2, cartel_y0 - 0.045,
+            '-- CARTEL LED "LABUROCRACIA" (ilumina hacia el colchon) --',
+            ha='center', va='top', fontsize=7, color=COLOR_CARTEL_NEON,
             fontweight='bold')
 
     # Perforaciones (vistas desde arriba)
     perf_spacing = BASE_ANCHO / (N_PERFORACIONES + 1)
     for i in range(N_PERFORACIONES):
         perf_x = cartel_x0 + perf_spacing * (i + 1)
-        perf_y = cartel_y0 + 0.005
+        perf_y = cartel_y0 - 0.005
         circ = plt.Circle((perf_x, perf_y), 0.008,
                           facecolor='white', edgecolor=COLOR_PERFORACION, linewidth=1.0)
         ax.add_patch(circ)
@@ -248,77 +253,86 @@ def generar_vista_planta():
             ha='center', va='top', fontsize=6, color=COLOR_PATA)
 
     # --- TRANSDUCTORES (proyeccion, entre sommier y colchon) ---
-    # Exciter L (izquierda, 1/4 del ancho, mitad del largo)
-    ex_l = plt.Circle((SOMMIER_ANCHO * 0.25, SOMMIER_LARGO * 0.5),
+    # Exciters L y R a la altura del cartel (10cm de la cabecera)
+    exciter_y = SOMMIER_LARGO - CARTEL_OFFSET_CABECERA  # 1.80m
+
+    # Exciter L (izquierda, 1/4 del ancho, Y=1.80m)
+    ex_l_x = SOMMIER_ANCHO * 0.25
+    ex_l = plt.Circle((ex_l_x, exciter_y),
                        EXCITER_DIAMETRO/2,
                        facecolor=COLOR_EXCITER, edgecolor='black',
-                       linewidth=1.0, alpha=0.6)
+                       linewidth=1.0, alpha=0.8)
     ax.add_patch(ex_l)
-    ax.text(SOMMIER_ANCHO * 0.25, SOMMIER_LARGO * 0.5, 'Exc\nL',
+    ax.text(ex_l_x, exciter_y, 'Exc\nL',
             ha='center', va='center', fontsize=6, fontweight='bold', color='white')
 
-    # Exciter R (derecha, 3/4 del ancho, mitad del largo)
-    ex_r = plt.Circle((SOMMIER_ANCHO * 0.75, SOMMIER_LARGO * 0.5),
+    # Exciter R (derecha, 3/4 del ancho, Y=1.80m)
+    ex_r_x = SOMMIER_ANCHO * 0.75
+    ex_r = plt.Circle((ex_r_x, exciter_y),
                        EXCITER_DIAMETRO/2,
                        facecolor=COLOR_EXCITER, edgecolor='black',
-                       linewidth=1.0, alpha=0.6)
+                       linewidth=1.0, alpha=0.8)
     ax.add_patch(ex_r)
-    ax.text(SOMMIER_ANCHO * 0.75, SOMMIER_LARGO * 0.5, 'Exc\nR',
+    ax.text(ex_r_x, exciter_y, 'Exc\nR',
             ha='center', va='center', fontsize=6, fontweight='bold', color='white')
 
-    # Bass Shaker BS250 (centrado)
-    bs = plt.Circle((SOMMIER_ANCHO * 0.5, SOMMIER_LARGO * 0.5),
+    # Bass Shaker BS250 (centrado en el medio de la cama: X=0.5m, Y=0.95m)
+    bs_x = SOMMIER_ANCHO * 0.5
+    bs_y = SOMMIER_LARGO * 0.5
+    bs = plt.Circle((bs_x, bs_y),
                      BASS_SHAKER_DIAMETRO/2,
                      facecolor=COLOR_BASS_SHAKER, edgecolor='black',
-                     linewidth=1.0, alpha=0.4)
+                     linewidth=1.0, alpha=0.6)
     ax.add_patch(bs)
-    ax.text(SOMMIER_ANCHO * 0.5, SOMMIER_LARGO * 0.5, 'BS250',
+    ax.text(bs_x, bs_y, 'BS250',
             ha='center', va='center', fontsize=7, fontweight='bold',
             color='white')
 
-    # --- CAJA ELECTRONICA (proyeccion, debajo del sommier contra cabecera) ---
+    # --- CAJA ELECTRONICA (proyeccion, en el piso entre la cabecera y el Bass Shaker) ---
     caja_x = (SOMMIER_ANCHO - CAJA_ANCHO) / 2
-    caja_y = SOMMIER_LARGO - CAJA_LARGO - 0.03
+    caja_y = 1.35  # Entre la cabecera (1.90m) y el Bass Shaker (0.95m)
     caja_rect = mpatches.Rectangle(
         (caja_x, caja_y), CAJA_ANCHO, CAJA_LARGO,
-        facecolor=COLOR_CAJA, edgecolor='black', linewidth=1.0,
-        alpha=0.3, linestyle='--'
+        facecolor=COLOR_CAJA, edgecolor='black', linewidth=1.2,
+        alpha=0.4, linestyle='--'
     )
     ax.add_patch(caja_rect)
     ax.text(caja_x + CAJA_ANCHO/2, caja_y + CAJA_LARGO/2,
             'CAJA\nBela+Amp',
-            ha='center', va='center', fontsize=6, color=COLOR_CAJA,
+            ha='center', va='center', fontsize=7, color=COLOR_CAJA,
             fontweight='bold')
 
-    # Cables (lineas punteadas desde transductores a caja)
+    # Cables (lineas opacas y visibles hacia la caja)
     caja_cx = caja_x + CAJA_ANCHO/2
     caja_cy = caja_y + CAJA_LARGO/2
-    for tx, ty in [(SOMMIER_ANCHO*0.25, SOMMIER_LARGO*0.5),
-                   (SOMMIER_ANCHO*0.75, SOMMIER_LARGO*0.5),
-                   (SOMMIER_ANCHO*0.5, SOMMIER_LARGO*0.5)]:
+    for tx, ty in [(ex_l_x, exciter_y), (ex_r_x, exciter_y), (bs_x, bs_y)]:
         ax.plot([tx, caja_cx], [ty, caja_cy],
-                color=COLOR_CABLE, linewidth=0.6, linestyle=':', alpha=0.4)
+                color='#111111', linewidth=1.2, linestyle='--', alpha=0.9)
 
-    # Cable 220V a pared
+    # Cable 12V desde caja al cartel LED
+    ax.plot([caja_cx, SOMMIER_ANCHO/2], [caja_y + CAJA_LARGO, cartel_y0],
+            color='#E02020', linewidth=1.3, linestyle=':', alpha=0.9)
+
+    # Cable 220V desde caja a pared
     ax.plot([caja_cx, caja_cx], [caja_y + CAJA_LARGO, SOMMIER_LARGO + 0.08],
-            color='#E02020', linewidth=1.0, linestyle='-', alpha=0.5)
+            color='#CC0000', linewidth=1.5, linestyle='-', alpha=0.9)
     ax.text(caja_cx + 0.03, SOMMIER_LARGO + 0.06, '220V',
-            fontsize=6, color='#E02020')
+            fontsize=6, color='#CC0000', fontweight='bold')
 
     # === COTAS ===
 
-    # Cota horizontal: ancho del sommier/colchón
+    # Cota horizontal: ancho del sommier/colchon
     dibujar_cota_horizontal(ax, sommier_x0, sommier_x0 + SOMMIER_ANCHO,
                             sommier_y0, f'{SOMMIER_ANCHO:.2f} m',
                             offset=0.15, lado='abajo', fontsize=10)
 
-    # Cota vertical: largo del sommier/colchón
+    # Cota vertical: largo del sommier/colchon
     dibujar_cota_vertical(ax, sommier_y0, sommier_y0 + SOMMIER_LARGO,
                           sommier_x0 + SOMMIER_ANCHO,
                           f'{SOMMIER_LARGO:.2f} m',
                           offset=0.15, lado='derecha', fontsize=10)
 
-    # Cota horizontal: ancho de la base de acrílico
+    # Cota horizontal: ancho de la base de acrilico
     dibujar_cota_horizontal(ax, cartel_x0, cartel_x0 + BASE_ANCHO,
                             cartel_y0 + 0.02, f'{BASE_ANCHO:.2f} m',
                             offset=-0.12, lado='arriba', fontsize=9)
@@ -333,16 +347,16 @@ def generar_vista_planta():
                 ha='left', va='center', fontsize=8, color='#E02020',
                 fontweight='bold', rotation=90)
 
-    # --- CONFIGURACIÓN DE EJES ---
+    # --- CONFIGURACION DE EJES ---
     ax.set_xlim(-0.35, SOMMIER_ANCHO + 0.55)
     ax.set_ylim(-0.35, SOMMIER_LARGO + 0.25)
     ax.set_aspect('equal')
     ax.set_xlabel('Ancho (m)', fontsize=12)
     ax.set_ylabel('Largo (m)', fontsize=12)
-    ax.set_title('VISTA 1 — PLANO DE PLANTA\nInstalación "LABUROCRACIA"',
+    ax.set_title('VISTA 1 -- PLANO DE PLANTA\nInstalacion "LABUROCRACIA"',
                  fontsize=16, fontweight='bold', pad=20)
 
-    # Cuadrícula sutil
+    # Cuadricula sutil
     ax.grid(True, linestyle=':', alpha=0.3, color='#CCCCCC')
     ax.tick_params(direction='out', length=4)
 
@@ -350,25 +364,25 @@ def generar_vista_planta():
     legend_elements = [
         mpatches.Patch(facecolor=COLOR_SOMMIER, edgecolor='black', label='Sommier'),
         mpatches.Patch(facecolor=COLOR_COLCHON, edgecolor='#999999',
-                       linestyle='--', label='Colchón'),
-        mpatches.Patch(facecolor=COLOR_CARTEL_BASE, edgecolor='black',
-                       label='Base acrílico (cartel LED)'),
+                       linestyle='--', label='Colchon'),
+        mpatches.Patch(facecolor='none', edgecolor='black',
+                       label='Base acrilico (contorno sin relleno)'),
         mpatches.Patch(facecolor=COLOR_EXCITER, edgecolor='black',
-                       alpha=0.6, label='Exciters L/R'),
+                       alpha=0.8, label='Exciters L/R (a 10cm cabecera)'),
         mpatches.Patch(facecolor=COLOR_BASS_SHAKER, edgecolor='black',
-                       alpha=0.4, label='Bass Shaker BS250'),
+                       alpha=0.6, label='Bass Shaker BS250 (centro)'),
         mpatches.Patch(facecolor=COLOR_CAJA, edgecolor='black',
-                       alpha=0.3, label='Caja electrónica'),
+                       alpha=0.4, label='Caja electronica (bajo sommier)'),
     ]
     ax.legend(handles=legend_elements, loc='lower right', fontsize=8,
               frameon=True, fancybox=True, shadow=True)
 
-    # Nota técnica
+    # Nota tecnica
     ax.text(0.02, 0.02,
             'Escala: medidas en metros | Obra: "LABUROCRACIA"\n'
-            'Cartel LED: 110x22cm sobre base acrilico 112x24cm\n'
-            'Transductores entre sommier y colchón (proyección)\n'
-            'Caja electrónica debajo del sommier (proyección)',
+            'Cartel LED: letras neon mirando hacia el colchon\n'
+            'Exciters L/R alineados a 10cm de cabecera\n'
+            'Caja electronica entre cabecera y Bass Shaker',
             transform=ax.transAxes, fontsize=7, va='bottom', ha='left',
             color='#888888', style='italic',
             bbox=dict(boxstyle='round,pad=0.4', facecolor='#F8F8F8',
@@ -414,20 +428,19 @@ def generar_vista_elevacion():
     ax.text(patas_x_lateral[2] + 0.06, PATA_ALTO / 2, 'Patas\n15cm',
             ha='left', va='center', fontsize=6, color=COLOR_PATA)
 
-    # --- CAJA ELECTRONICA (en el piso, contra cabecera) ---
-    caja_x = SOMMIER_LARGO - CAJA_LARGO - 0.03 - CARTEL_OFFSET_CABECERA
+    # --- CAJA ELECTRONICA (en el piso, entre la cabecera y el Bass Shaker) ---
+    caja_x = CARTEL_OFFSET_CABECERA + 0.25  # Ubicada a ~35cm de la cabecera, antes del Bass Shaker (0.95m)
     caja_rect = mpatches.Rectangle(
         (caja_x, 0), CAJA_LARGO, CAJA_ALTO,
-        facecolor=COLOR_CAJA, edgecolor='black', linewidth=1.0, alpha=0.7
+        facecolor=COLOR_CAJA, edgecolor='black', linewidth=1.2, alpha=0.7
     )
     ax.add_patch(caja_rect)
     ax.text(caja_x + CAJA_LARGO/2, CAJA_ALTO/2, 'Bela+Amp',
             ha='center', va='center', fontsize=6, color='white', fontweight='bold')
 
-    # Cable 220V de caja a pared
-    ax.plot([caja_x + CAJA_LARGO, SOMMIER_LARGO + 0.02],
-            [CAJA_ALTO/2, CAJA_ALTO/2],
-            color='#E02020', linewidth=1.0, linestyle='-', alpha=0.6)
+    # Cable 220V de caja a pared (atras)
+    ax.plot([caja_x, -0.05], [CAJA_ALTO/2, CAJA_ALTO/2],
+            color='#CC0000', linewidth=1.5, linestyle='-', alpha=0.9)
 
     # --- SOMMIER (ahora sobre las patas) ---
     sommier_y0 = PATA_ALTO
@@ -444,7 +457,17 @@ def generar_vista_elevacion():
     # --- TRANSDUCTORES (entre sommier y colchon, vista de perfil) ---
     trans_y = sommier_y0 + SOMMIER_ALTO  # sobre el sommier
 
-    # Bass Shaker BS250 (centrado, el mas alto)
+    # Exciters (alineados a 10cm de la cabecera, alineados con el cartel)
+    exc_x = CARTEL_OFFSET_CABECERA - EXCITER_DIAMETRO / 2
+    exc_rect = mpatches.Rectangle(
+        (exc_x, trans_y), EXCITER_DIAMETRO, EXCITER_ALTO,
+        facecolor=COLOR_EXCITER, edgecolor='black', linewidth=0.8, alpha=0.9
+    )
+    ax.add_patch(exc_rect)
+    ax.text(exc_x + EXCITER_DIAMETRO/2, trans_y + EXCITER_ALTO + 0.01, 'Exciters (L/R)',
+            ha='center', va='bottom', fontsize=6, color=COLOR_EXCITER, fontweight='bold')
+
+    # Bass Shaker BS250 (centrado en el medio de la cama: X=0.95m)
     bs_x = SOMMIER_LARGO / 2 - BASS_SHAKER_DIAMETRO / 2
     bs_rect = mpatches.Rectangle(
         (bs_x, trans_y), BASS_SHAKER_DIAMETRO, BASS_SHAKER_ALTO,
@@ -454,20 +477,10 @@ def generar_vista_elevacion():
     ax.text(SOMMIER_LARGO / 2, trans_y + BASS_SHAKER_ALTO / 2, 'BS250',
             ha='center', va='center', fontsize=6, color='white', fontweight='bold')
 
-    # Exciter (uno visible en perfil, a 1/4 del largo — el otro queda detras)
-    exc_x = SOMMIER_LARGO * 0.25 - EXCITER_DIAMETRO / 2
-    exc_rect = mpatches.Rectangle(
-        (exc_x, trans_y), EXCITER_DIAMETRO, EXCITER_ALTO,
-        facecolor=COLOR_EXCITER, edgecolor='black', linewidth=0.8, alpha=0.8
-    )
-    ax.add_patch(exc_rect)
-    ax.text(exc_x + EXCITER_DIAMETRO/2, trans_y + EXCITER_ALTO + 0.01, 'Exc',
-            ha='center', va='bottom', fontsize=5, color=COLOR_EXCITER)
-
-    # Cables desde transductores bajando a caja
-    for tx in [SOMMIER_LARGO/2, SOMMIER_LARGO*0.25]:
+    # Cables desde transductores bajando a caja (opacos y visibles)
+    for tx in [exc_x + EXCITER_DIAMETRO/2, SOMMIER_LARGO/2]:
         ax.plot([tx, caja_x + CAJA_LARGO/2], [trans_y, CAJA_ALTO],
-                color=COLOR_CABLE, linewidth=0.6, linestyle='--', alpha=0.4)
+                color='#111111', linewidth=1.2, linestyle='--', alpha=0.9)
 
     # --- COLCHON (ahora sobre los transductores) ---
     colchon_y0 = trans_y + max(EXCITER_ALTO, BASS_SHAKER_ALTO)
@@ -493,36 +506,41 @@ def generar_vista_elevacion():
 
     # --- BASE DE ACRÍLICO DEL CARTEL (VISTA DE PERFIL) ---
     # En vista lateral, el cartel se ve de PERFIL (de canto).
-    # Solo se ve su espesor (~3cm) y su altura (24cm).
     CARTEL_ESPESOR = 0.03  # m (~3cm espesor del acrílico + neón)
 
     # Posición horizontal: corrido 10cm desde la cabecera (X=0) hacia el interior
     base_x0 = CARTEL_OFFSET_CABECERA
     base_y0 = CARTEL_ALTURA_PISO
 
-    # Base de acrílico (perfil): rectángulo delgado
+    # Base de acrílico (perfil): marco sin relleno de color
     base_acrilico = mpatches.Rectangle(
         (base_x0, base_y0), CARTEL_ESPESOR, BASE_ALTO,
-        facecolor=COLOR_CARTEL_BASE, edgecolor='black', linewidth=1.5
+        facecolor='none', edgecolor='black', linewidth=1.2
     )
     ax.add_patch(base_acrilico)
 
-    # Borde rojo del neón LED (visible como línea en el frente del perfil)
+    # Borde rojo del neón LED (mirando hacia el COLCHÓN, es decir, cara DERECHA del perfil)
     neon_y0 = base_y0 + (BASE_ALTO - CARTEL_ALTO) / 2
-    ax.plot([base_x0, base_x0], [neon_y0, neon_y0 + CARTEL_ALTO],
-            color=COLOR_CARTEL_NEON, linewidth=2.5, solid_capstyle='round')
+    frente_cartel_x = base_x0 + CARTEL_ESPESOR  # Frente apuntando hacia el colchón
+    ax.plot([frente_cartel_x, frente_cartel_x], [neon_y0, neon_y0 + CARTEL_ALTO],
+            color=COLOR_CARTEL_NEON, linewidth=3.0, solid_capstyle='round')
 
     # Etiqueta del cartel (con línea de llamada)
     label_x = base_x0 + CARTEL_ESPESOR + 0.25
     label_y = base_y0 + BASE_ALTO / 2
-    ax.annotate('Cartel LED\n"LABUROCRACIA"\n(vista de perfil)\n110x22 cm\nBase: 112x24 cm',
-                xy=(base_x0 + CARTEL_ESPESOR, label_y),
+    ax.annotate('Cartel LED\n"LABUROCRACIA"\n(letras neon hacia el colchon)\n110x22 cm\nBase: 112x24 cm',
+                xy=(frente_cartel_x, label_y),
                 xytext=(label_x, label_y),
                 fontsize=8, color='#333333', va='center',
                 fontweight='bold',
-                arrowprops=dict(arrowstyle='->', color='#555555', lw=1.0),
+                arrowprops=dict(arrowstyle='->', color=COLOR_CARTEL_NEON, lw=1.2),
                 bbox=dict(boxstyle='round,pad=0.4', facecolor='#FFF8F0',
-                          edgecolor='#CCCCCC'))
+                          edgecolor=COLOR_CARTEL_NEON))
+
+    # Cable 12V desde caja a cartel
+    ax.plot([caja_x + CAJA_LARGO/2, base_x0 + CARTEL_ESPESOR/2],
+            [CAJA_ALTO, base_y0],
+            color='#E02020', linewidth=1.3, linestyle=':', alpha=0.9)
 
     # --- LÍNEA DE CUELGUE (en perfil, las 3 perforaciones se superponen) ---
     techo_y = CARTEL_ALTURA_PISO + BASE_ALTO + 0.25
@@ -604,10 +622,10 @@ def generar_vista_elevacion():
     legend_elements = [
         mpatches.Patch(facecolor=COLOR_SOMMIER, edgecolor='black', label='Sommier (0.30m alto)'),
         mpatches.Patch(facecolor=COLOR_COLCHON, edgecolor='#999999', label='Colchon (0.25m alto)'),
-        mpatches.Patch(facecolor=COLOR_CARTEL_BASE, edgecolor='black',
-                       label='Base acrilico (perfil ~3cm)'),
+        mpatches.Patch(facecolor='none', edgecolor='black',
+                       label='Base acrilico (contorno transparente)'),
         mpatches.Patch(facecolor='none', edgecolor=COLOR_CARTEL_NEON, linewidth=2,
-                       label='Neon LED (perfil)'),
+                       label='Neon LED (frente hacia colchon)'),
     ]
     ax.legend(handles=legend_elements, loc='upper right', fontsize=9,
               frameon=True, fancybox=True, shadow=True)
@@ -726,20 +744,20 @@ def dibujar_componentes_3d(ax):
         dibujar_cilindro(ax, cx, cy, 0, PATA_DIAMETRO/2, PATA_ALTO,
                          COLOR_PATA, alpha=0.6)
 
-    # === CAJA DE ELECTRONICA (en el piso, contra cabecera, centrada en X) ===
+    # === CAJA DE ELECTRONICA (en el piso, entre la cabecera y el Bass Shaker) ===
     caja_x = (SOMMIER_ANCHO - CAJA_ANCHO) / 2
-    caja_y = SOMMIER_LARGO - CAJA_LARGO - 0.03  # contra cabecera con un poco de margen
+    caja_y = 1.35  # Entre la cabecera (1.90m) y el Bass Shaker (0.95m)
     dibujar_prisma(ax, caja_x, caja_y, 0,
                    CAJA_ANCHO, CAJA_LARGO, CAJA_ALTO,
-                   COLOR_CAJA, alpha=0.7, label='Bela+Amp')
+                   color='#FFFFFF', edgecolor='black', alpha=0.9, linewidth=1.2, label='Bela+Amp')
 
     # Cable 220V saliendo de la caja hacia la pared (cabecera)
     cable_x = caja_x + CAJA_ANCHO / 2
     ax.plot([cable_x, cable_x], [caja_y + CAJA_LARGO, SOMMIER_LARGO + 0.05],
             [CAJA_ALTO/2, CAJA_ALTO/2],
-            color=COLOR_CABLE, linewidth=1.5, linestyle='-')
+            color='#CC0000', linewidth=1.8, linestyle='-', alpha=0.9)
     ax.text(cable_x, SOMMIER_LARGO + 0.06, CAJA_ALTO/2, '220V',
-            ha='center', fontsize=6, color='#E02020')
+            ha='center', fontsize=6, color='#CC0000', fontweight='bold')
 
     # === SOMMIER ===
     dibujar_prisma(ax, 0, 0, PATA_ALTO,
@@ -749,34 +767,33 @@ def dibujar_componentes_3d(ax):
     # === TRANSDUCTORES (entre sommier y colchon) ===
     z_transductores = PATA_ALTO + SOMMIER_ALTO
 
-    # Exciter L (izquierda, a 1/4 del ancho)
+    # Exciters L y R a 10cm de la cabecera (alineados con el cartel)
+    exciter_y = SOMMIER_LARGO - CARTEL_OFFSET_CABECERA  # 1.80m
+
+    # Exciter L (izquierda, X=0.25m, Y=1.80m)
     ex_l_x = SOMMIER_ANCHO * 0.25
-    ex_l_y = SOMMIER_LARGO * 0.5
-    dibujar_cilindro(ax, ex_l_x, ex_l_y, z_transductores,
+    dibujar_cilindro(ax, ex_l_x, exciter_y, z_transductores,
                      EXCITER_DIAMETRO/2, EXCITER_ALTO,
                      COLOR_EXCITER, alpha=0.9, label='Exc L')
 
-    # Exciter R (derecha, a 3/4 del ancho)
+    # Exciter R (derecha, X=0.75m, Y=1.80m)
     ex_r_x = SOMMIER_ANCHO * 0.75
-    ex_r_y = SOMMIER_LARGO * 0.5
-    dibujar_cilindro(ax, ex_r_x, ex_r_y, z_transductores,
+    dibujar_cilindro(ax, ex_r_x, exciter_y, z_transductores,
                      EXCITER_DIAMETRO/2, EXCITER_ALTO,
                      COLOR_EXCITER, alpha=0.9, label='Exc R')
 
-    # Bass Shaker (centrado)
+    # Bass Shaker (centrado en el medio del colchon: X=0.5m, Y=0.95m)
     bs_x = SOMMIER_ANCHO * 0.5
     bs_y = SOMMIER_LARGO * 0.5
     dibujar_cilindro(ax, bs_x, bs_y, z_transductores,
                      BASS_SHAKER_DIAMETRO/2, BASS_SHAKER_ALTO,
                      COLOR_BASS_SHAKER, alpha=0.8, label='BS250')
 
-    # Cables de los transductores hacia la caja (lineas)
-    z_cable = PATA_ALTO / 2
-    for tx, ty in [(ex_l_x, ex_l_y), (ex_r_x, ex_r_y), (bs_x, bs_y)]:
-        # Cable baja por dentro hacia la caja
+    # Cables de los transductores hacia la caja (lineas opacas y visibles)
+    for tx, ty in [(ex_l_x, exciter_y), (ex_r_x, exciter_y), (bs_x, bs_y)]:
         ax.plot([tx, cable_x], [ty, caja_y + CAJA_LARGO/2],
                 [z_transductores, CAJA_ALTO],
-                color=COLOR_CABLE, linewidth=0.8, linestyle='--', alpha=0.5)
+                color='#111111', linewidth=1.2, linestyle='--', alpha=0.9)
 
     # === COLCHON ===
     z_colchon = PATA_ALTO + SOMMIER_ALTO + max(EXCITER_ALTO, BASS_SHAKER_ALTO)
@@ -790,27 +807,27 @@ def dibujar_componentes_3d(ax):
     cartel_y = SOMMIER_LARGO - CARTEL_OFFSET_CABECERA
     cartel_z = CARTEL_ALTURA_PISO
 
-    # Base de acrilico
+    # Base de acrilico: contorno transparente sin relleno de color
     dibujar_prisma(ax, cartel_x, cartel_y - CARTEL_ESPESOR/2, cartel_z,
                    BASE_ANCHO, CARTEL_ESPESOR, BASE_ALTO,
-                   COLOR_CARTEL_BASE, alpha=0.8, linewidth=1.0)
+                   color='#FFFFFF', edgecolor='black', alpha=0.1, linewidth=1.2)
 
-    # Borde neon LED (como un rectangulo fino en el frente)
+    # Borde neon LED y letras mirando hacia el COLCHON (cara frontal apuntando a -Y)
     neon_x = cartel_x + (BASE_ANCHO - CARTEL_ANCHO) / 2
     neon_z = cartel_z + (BASE_ALTO - CARTEL_ALTO) / 2
-    neon_y = cartel_y - CARTEL_ESPESOR/2 - 0.002
+    frente_neon_y = cartel_y - CARTEL_ESPESOR/2 - 0.002  # Cara frontal hacia el colchon
 
-    # Dibujar marco del neon como lineas
+    # Marco de luz roja en la cara frontal
     neon_pts_x = [neon_x, neon_x + CARTEL_ANCHO, neon_x + CARTEL_ANCHO, neon_x, neon_x]
     neon_pts_z = [neon_z, neon_z, neon_z + CARTEL_ALTO, neon_z + CARTEL_ALTO, neon_z]
-    neon_pts_y = [neon_y] * 5
+    neon_pts_y = [frente_neon_y] * 5
     ax.plot(neon_pts_x, neon_pts_y, neon_pts_z,
-            color=COLOR_CARTEL_NEON, linewidth=2.5)
+            color=COLOR_CARTEL_NEON, linewidth=3.0)
 
-    # Texto LABUROCRACIA
-    ax.text(SOMMIER_ANCHO/2, neon_y - 0.01, cartel_z + BASE_ALTO/2,
+    # Texto LABUROCRACIA ocupando casi todo el cartel en rojo neon
+    ax.text(SOMMIER_ANCHO/2, frente_neon_y - 0.01, cartel_z + BASE_ALTO/2,
             'LABUROCRACIA', ha='center', va='center',
-            fontsize=7, color=COLOR_CARTEL_NEON, fontweight='bold')
+            fontsize=10, color=COLOR_CARTEL_NEON, fontweight='bold')
 
     # Lineas de cuelgue
     techo_z = cartel_z + BASE_ALTO + 0.15
@@ -819,13 +836,13 @@ def dibujar_componentes_3d(ax):
         px = cartel_x + perf_spacing * (i + 1)
         py = cartel_y
         ax.plot([px, px], [py, py], [cartel_z + BASE_ALTO, techo_z],
-                color='#AAAAAA', linewidth=0.6, linestyle='--')
+                color='#888888', linewidth=0.8, linestyle='--')
 
-    # Cable 12V desde caja al cartel
+    # Cable 12V visible desde caja al cartel
     ax.plot([cable_x, SOMMIER_ANCHO/2],
             [caja_y + CAJA_LARGO, cartel_y],
             [CAJA_ALTO, cartel_z],
-            color='#E02020', linewidth=0.8, linestyle=':', alpha=0.6)
+            color='#E02020', linewidth=1.3, linestyle=':', alpha=0.9)
 
     return z_colchon
 

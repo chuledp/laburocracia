@@ -3,6 +3,8 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
+from matplotlib.textpath import TextPath
+from matplotlib.font_manager import FontProperties
 import numpy as np
 
 # ==============================================================================
@@ -367,6 +369,8 @@ def generar_vista_planta():
                        linestyle='--', label='Colchon'),
         mpatches.Patch(facecolor='none', edgecolor='black',
                        label='Base acrilico (contorno sin relleno)'),
+        mpatches.Patch(facecolor='none', edgecolor=COLOR_PATA,
+                       linestyle='--', label='Patas (x6, proyeccion bajo sommier)'),
         mpatches.Patch(facecolor=COLOR_EXCITER, edgecolor='black',
                        alpha=0.8, label='Exciters L/R (a 10cm cabecera)'),
         mpatches.Patch(facecolor=COLOR_BASS_SHAKER, edgecolor='black',
@@ -557,25 +561,31 @@ def generar_vista_elevacion():
     dibujar_cota_vertical(ax, 0, CARTEL_ALTURA_PISO,
                           SOMMIER_LARGO + 0.05,
                           f'{CARTEL_ALTURA_PISO:.2f} m',
-                          offset=0.12, lado='derecha', fontsize=10)
+                          offset=0.10, lado='derecha', fontsize=10)
 
-    # Cota vertical: altura del sommier
-    dibujar_cota_vertical(ax, 0, SOMMIER_ALTO,
+    # Cota vertical: altura de patas (15cm)
+    dibujar_cota_vertical(ax, 0, PATA_ALTO,
+                          SOMMIER_LARGO + 0.05,
+                          f'{PATA_ALTO * 100:.0f} cm',
+                          offset=0.28, lado='derecha', fontsize=8)
+
+    # Cota vertical: altura del sommier (30cm)
+    dibujar_cota_vertical(ax, sommier_y0, sommier_y0 + SOMMIER_ALTO,
                           SOMMIER_LARGO + 0.05,
                           f'{SOMMIER_ALTO:.2f} m',
-                          offset=0.35, lado='derecha', fontsize=9)
+                          offset=0.45, lado='derecha', fontsize=9)
 
-    # Cota vertical: altura del colchón
-    dibujar_cota_vertical(ax, SOMMIER_ALTO, SOMMIER_ALTO + COLCHON_ALTO,
+    # Cota vertical: altura del colchón (25cm)
+    dibujar_cota_vertical(ax, colchon_y0, colchon_y0 + COLCHON_ALTO,
                           SOMMIER_LARGO + 0.05,
                           f'{COLCHON_ALTO:.2f} m',
-                          offset=0.55, lado='derecha', fontsize=9)
+                          offset=0.62, lado='derecha', fontsize=9)
 
-    # Cota vertical: altura total cama
+    # Cota vertical: altura total cama (75cm)
     dibujar_cota_vertical(ax, 0, altura_cama,
                           SOMMIER_LARGO + 0.05,
                           f'{altura_cama:.2f} m\n(total cama)',
-                          offset=0.75, lado='derecha', fontsize=9)
+                          offset=0.80, lado='derecha', fontsize=9)
 
     # Cota vertical: altura base acrílico (24cm)
     dibujar_cota_vertical(ax, base_y0, base_y0 + BASE_ALTO,
@@ -721,6 +731,55 @@ def dibujar_cilindro(ax, cx, cy, z_base, radio, altura, color,
                 ha='center', va='bottom', fontsize=6, color='#333333')
 
 
+def dibujar_texto_3d_en_plano(ax, texto, x0, y0, z0, ancho, alto, color=COLOR_CARTEL_NEON, lw=2.0):
+    """Dibuja un texto en 3D proyectado en el plano vertical X-Z a profundidad Y0, ocupando (ancho x alto)."""
+    tp = TextPath((0, 0), texto, size=1.0, prop=FontProperties(family='sans-serif', weight='bold'))
+    vertices = tp.vertices
+    codes = tp.codes
+
+    vx = vertices[:, 0]
+    vz = vertices[:, 1]
+
+    min_x, max_x = vx.min(), vx.max()
+    min_z, max_z = vz.min(), vz.max()
+
+    span_x = max_x - min_x if max_x > min_x else 1.0
+    span_z = max_z - min_z if max_z > min_z else 1.0
+
+    # Margen sutil de 2cm para encuadre dentro del tubo de neón
+    pad_x = 0.02
+    pad_z = 0.02
+    target_x0 = x0 + pad_x
+    target_ancho = max(0.01, ancho - 2 * pad_x)
+    target_z0 = z0 + pad_z
+    target_alto = max(0.01, alto - 2 * pad_z)
+
+    x_3d = target_x0 + (vx - min_x) / span_x * target_ancho
+    z_3d = target_z0 + (vz - min_z) / span_z * target_alto
+    y_3d = np.full_like(x_3d, y0)
+
+    curr_x, curr_y, curr_z = [], [], []
+    for (x, y, z), code in zip(zip(x_3d, y_3d, z_3d), codes):
+        if code == TextPath.MOVETO:
+            if len(curr_x) > 1:
+                ax.plot(curr_x, curr_y, curr_z, color=color, linewidth=lw)
+            curr_x, curr_y, curr_z = [x], [y], [z]
+        elif code in (TextPath.LINETO, TextPath.CURVE3, TextPath.CURVE4):
+            curr_x.append(x)
+            curr_y.append(y)
+            curr_z.append(z)
+        elif code == TextPath.CLOSEPOLY:
+            if len(curr_x) > 1:
+                curr_x.append(curr_x[0])
+                curr_y.append(curr_y[0])
+                curr_z.append(curr_z[0])
+                ax.plot(curr_x, curr_y, curr_z, color=color, linewidth=lw)
+            curr_x, curr_y, curr_z = [], [], []
+
+    if len(curr_x) > 1:
+        ax.plot(curr_x, curr_y, curr_z, color=color, linewidth=lw)
+
+
 def posiciones_patas():
     """Retorna las posiciones (cx, cy) de las 6 patas del sommier."""
     margen = 0.05  # distancia del borde
@@ -824,10 +883,9 @@ def dibujar_componentes_3d(ax):
     ax.plot(neon_pts_x, neon_pts_y, neon_pts_z,
             color=COLOR_CARTEL_NEON, linewidth=3.0)
 
-    # Texto LABUROCRACIA ocupando casi todo el cartel en rojo neon
-    ax.text(SOMMIER_ANCHO/2, frente_neon_y - 0.01, cartel_z + BASE_ALTO/2,
-            'LABUROCRACIA', ha='center', va='center',
-            fontsize=10, color=COLOR_CARTEL_NEON, fontweight='bold')
+    # Texto LABUROCRACIA proyectado en 3D con perspectiva real ocupando el cartel
+    dibujar_texto_3d_en_plano(ax, 'LABUROCRACIA', neon_x, frente_neon_y, neon_z,
+                              CARTEL_ANCHO, CARTEL_ALTO, color=COLOR_CARTEL_NEON, lw=2.2)
 
     # Lineas de cuelgue
     techo_z = cartel_z + BASE_ALTO + 0.15

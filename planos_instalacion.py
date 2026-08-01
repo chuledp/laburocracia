@@ -87,6 +87,11 @@ CAJA_LARGO = 0.25    # m (25cm)
 CAJA_ANCHO = 0.20    # m (20cm)
 CAJA_ALTO  = 0.08    # m (8cm)
 
+# Zapatilla multisocket (3 tomas 220V)
+ZAPATILLA_LARGO = 0.20   # m (20cm)
+ZAPATILLA_ANCHO = 0.07   # m (7cm)
+ZAPATILLA_ALTO  = 0.04   # m (4cm)
+
 # Espesor del cartel (para vista de perfil)
 CARTEL_ESPESOR = 0.03  # m (~3cm acrílico + neón)
 
@@ -95,6 +100,7 @@ COLOR_PATA = '#A0A0A0'          # Gris medio
 COLOR_EXCITER = '#FF8C00'       # Naranja
 COLOR_BASS_SHAKER = '#8B4513'   # Marrón
 COLOR_CAJA = '#4682B4'          # Azul acero
+COLOR_ZAPATILLA = '#E0E0E0'     # Gris claro / blanco
 COLOR_CABLE = '#666666'         # Gris para cables
 
 
@@ -304,22 +310,57 @@ def generar_vista_planta():
             ha='center', va='center', fontsize=7, color=COLOR_CAJA,
             fontweight='bold')
 
-    # Cables (lineas opacas y visibles hacia la caja)
+    # --- ZAPATILLA MULTISOCKET 220V (a la izquierda de la caja de electronica) ---
+    zapatilla_x = caja_x - ZAPATILLA_ANCHO - 0.04  # X = 0.29m
+    zapatilla_y = caja_y                           # Y = 1.35m
+    zap_rect = mpatches.Rectangle(
+        (zapatilla_x, zapatilla_y), ZAPATILLA_ANCHO, ZAPATILLA_LARGO,
+        facecolor=COLOR_ZAPATILLA, edgecolor='black', linewidth=1.2,
+        alpha=0.9, linestyle='-'
+    )
+    ax.add_patch(zap_rect)
+
+    # 3 tomas / enchufes de 3 patas con puesta a tierra (IRAM 2073 / Tipo I)
+    zap_cx = zapatilla_x + ZAPATILLA_ANCHO / 2
+    for i in range(3):
+        socket_y = zapatilla_y + (i + 1) * (ZAPATILLA_LARGO / 4)
+        circ_soc = plt.Circle((zap_cx, socket_y), 0.014,
+                              facecolor='#F5F5F5', edgecolor='black', linewidth=0.8)
+        ax.add_patch(circ_soc)
+
+        # Patas oblicuas superiores (Fase y Neutro)
+        ax.plot([zap_cx - 0.005, zap_cx - 0.002], [socket_y + 0.005, socket_y + 0.001],
+                color='#111111', linewidth=1.2)
+        ax.plot([zap_cx + 0.005, zap_cx + 0.002], [socket_y + 0.005, socket_y + 0.001],
+                color='#111111', linewidth=1.2)
+        # Pata vertical inferior (Tierra)
+        ax.plot([zap_cx, zap_cx], [socket_y - 0.002, socket_y - 0.007],
+                color='#111111', linewidth=1.2)
+
+    ax.text(zap_cx, zapatilla_y - 0.03, 'Zapatilla 220V\n(3 tomas c/tierra)',
+            ha='center', va='top', fontsize=6, fontweight='bold', color='#333333')
+
+    # Cable 220V principal: desde la pared (cabecera) directo a la ZAPATILLA
+    ax.plot([zap_cx, zap_cx], [zapatilla_y + ZAPATILLA_LARGO, SOMMIER_LARGO + 0.08],
+            color='#CC0000', linewidth=1.8, linestyle='-', alpha=0.9)
+    ax.text(zap_cx - 0.03, SOMMIER_LARGO + 0.06, '220V (Pared)',
+            fontsize=6, color='#CC0000', fontweight='bold', ha='right')
+
+    # Cables cortos de alimentación desde la ZAPATILLA:
+    # 1. Alimentación a la Caja Bela+Amp
+    ax.plot([zap_cx, caja_x], [zapatilla_y + ZAPATILLA_LARGO * 0.75, caja_y + CAJA_LARGO * 0.75],
+            color='#333333', linewidth=1.2, linestyle='-', alpha=0.9)
+
+    # 2. Alimentación 12V / Neón hacia el Cartel LED (desde la caja o zapatilla)
     caja_cx = caja_x + CAJA_ANCHO/2
     caja_cy = caja_y + CAJA_LARGO/2
     for tx, ty in [(ex_l_x, exciter_y), (ex_r_x, exciter_y), (bs_x, bs_y)]:
         ax.plot([tx, caja_cx], [ty, caja_cy],
                 color='#111111', linewidth=1.2, linestyle='--', alpha=0.9)
 
-    # Cable 12V desde caja al cartel LED
+    # Cable 12V desde caja/zapatilla al cartel LED
     ax.plot([caja_cx, SOMMIER_ANCHO/2], [caja_y + CAJA_LARGO, cartel_y0],
             color='#E02020', linewidth=1.3, linestyle=':', alpha=0.9)
-
-    # Cable 220V desde caja a pared
-    ax.plot([caja_cx, caja_cx], [caja_y + CAJA_LARGO, SOMMIER_LARGO + 0.08],
-            color='#CC0000', linewidth=1.5, linestyle='-', alpha=0.9)
-    ax.text(caja_cx + 0.03, SOMMIER_LARGO + 0.06, '220V',
-            fontsize=6, color='#CC0000', fontweight='bold')
 
     # === COTAS ===
 
@@ -377,6 +418,8 @@ def generar_vista_planta():
                        alpha=0.6, label='Bass Shaker BS250 (centro)'),
         mpatches.Patch(facecolor=COLOR_CAJA, edgecolor='black',
                        alpha=0.4, label='Caja electronica (bajo sommier)'),
+        mpatches.Patch(facecolor=COLOR_ZAPATILLA, edgecolor='black',
+                       alpha=0.9, label='Zapatilla 220V (3 tomas)'),
     ]
     ax.legend(handles=legend_elements, loc='lower right', fontsize=8,
               frameon=True, fancybox=True, shadow=True)
@@ -432,6 +475,16 @@ def generar_vista_elevacion():
     ax.text(patas_x_lateral[2] + 0.06, PATA_ALTO / 2, 'Patas\n15cm',
             ha='left', va='center', fontsize=6, color=COLOR_PATA)
 
+    # --- ZAPATILLA MULTISOCKET 220V (en el piso, cerca de la cabecera) ---
+    zap_x_lateral = CARTEL_OFFSET_CABECERA + 0.05  # Ubicada a 15cm de la cabecera
+    zap_rect_lat = mpatches.Rectangle(
+        (zap_x_lateral, 0), ZAPATILLA_LARGO, ZAPATILLA_ALTO,
+        facecolor=COLOR_ZAPATILLA, edgecolor='black', linewidth=1.0, alpha=0.9
+    )
+    ax.add_patch(zap_rect_lat)
+    ax.text(zap_x_lateral + ZAPATILLA_LARGO/2, ZAPATILLA_ALTO/2, 'Zapatilla 220V',
+            ha='center', va='center', fontsize=5, color='#333333', fontweight='bold')
+
     # --- CAJA ELECTRONICA (en el piso, entre la cabecera y el Bass Shaker) ---
     caja_x = CARTEL_OFFSET_CABECERA + 0.25  # Ubicada a ~35cm de la cabecera, antes del Bass Shaker (0.95m)
     caja_rect = mpatches.Rectangle(
@@ -442,9 +495,13 @@ def generar_vista_elevacion():
     ax.text(caja_x + CAJA_LARGO/2, CAJA_ALTO/2, 'Bela+Amp',
             ha='center', va='center', fontsize=6, color='white', fontweight='bold')
 
-    # Cable 220V de caja a pared (atras)
-    ax.plot([caja_x, -0.05], [CAJA_ALTO/2, CAJA_ALTO/2],
+    # Cable 220V principal de la pared a la Zapatilla
+    ax.plot([zap_x_lateral, -0.05], [ZAPATILLA_ALTO/2, ZAPATILLA_ALTO/2],
             color='#CC0000', linewidth=1.5, linestyle='-', alpha=0.9)
+
+    # Cable de alimentación de Zapatilla a caja Bela+Amp
+    ax.plot([zap_x_lateral + ZAPATILLA_LARGO, caja_x], [ZAPATILLA_ALTO/2, CAJA_ALTO/2],
+            color='#333333', linewidth=1.2, linestyle='-', alpha=0.9)
 
     # --- SOMMIER (ahora sobre las patas) ---
     sommier_y0 = PATA_ALTO
@@ -810,13 +867,26 @@ def dibujar_componentes_3d(ax):
                    CAJA_ANCHO, CAJA_LARGO, CAJA_ALTO,
                    color='#FFFFFF', edgecolor='black', alpha=0.9, linewidth=1.2, label='Bela+Amp')
 
-    # Cable 220V saliendo de la caja hacia la pared (cabecera)
-    cable_x = caja_x + CAJA_ANCHO / 2
-    ax.plot([cable_x, cable_x], [caja_y + CAJA_LARGO, SOMMIER_LARGO + 0.05],
-            [CAJA_ALTO/2, CAJA_ALTO/2],
+    # === ZAPATILLA MULTISOCKET 220V (a la izquierda de la caja de electronica) ===
+    zapatilla_x = caja_x - ZAPATILLA_ANCHO - 0.04  # X = 0.29m
+    zapatilla_y = caja_y                           # Y = 1.35m
+    dibujar_prisma(ax, zapatilla_x, zapatilla_y, 0,
+                   ZAPATILLA_ANCHO, ZAPATILLA_LARGO, ZAPATILLA_ALTO,
+                   color=COLOR_ZAPATILLA, edgecolor='black', alpha=0.9, linewidth=1.0, label='Zapatilla 220V')
+
+    # Cable 220V principal: saliendo de la Zapatilla hacia la pared (cabecera)
+    zap_cx = zapatilla_x + ZAPATILLA_ANCHO / 2
+    ax.plot([zap_cx, zap_cx], [zapatilla_y + ZAPATILLA_LARGO, SOMMIER_LARGO + 0.05],
+            [ZAPATILLA_ALTO/2, ZAPATILLA_ALTO/2],
             color='#CC0000', linewidth=1.8, linestyle='-', alpha=0.9)
-    ax.text(cable_x, SOMMIER_LARGO + 0.06, CAJA_ALTO/2, '220V',
+    ax.text(zap_cx, SOMMIER_LARGO + 0.06, ZAPATILLA_ALTO/2, '220V',
             ha='center', fontsize=6, color='#CC0000', fontweight='bold')
+
+    # Cable corto de alimentación de Zapatilla a caja Bela+Amp
+    cable_x = caja_x + CAJA_ANCHO / 2
+    ax.plot([zap_cx, caja_x], [zapatilla_y + ZAPATILLA_LARGO * 0.75, caja_y + CAJA_LARGO * 0.75],
+            [ZAPATILLA_ALTO/2, CAJA_ALTO/2],
+            color='#333333', linewidth=1.2, linestyle='-', alpha=0.9)
 
     # === SOMMIER ===
     dibujar_prisma(ax, 0, 0, PATA_ALTO,
@@ -962,6 +1032,7 @@ def generar_vista_iso_frente():
         mpatches.Patch(facecolor=COLOR_EXCITER, edgecolor='black', label='Exciters L/R'),
         mpatches.Patch(facecolor=COLOR_BASS_SHAKER, edgecolor='black', label='Bass Shaker BS250'),
         mpatches.Patch(facecolor=COLOR_CAJA, edgecolor='black', label='Caja electronica'),
+        mpatches.Patch(facecolor=COLOR_ZAPATILLA, edgecolor='black', label='Zapatilla 220V (3 tomas)'),
     ]
     ax.legend(handles=legend_elements, loc='upper left', fontsize=8,
               frameon=True, fancybox=True, shadow=True)
@@ -997,6 +1068,7 @@ def generar_vista_iso_cabecera():
         mpatches.Patch(facecolor=COLOR_EXCITER, edgecolor='black', label='Exciters L/R'),
         mpatches.Patch(facecolor=COLOR_BASS_SHAKER, edgecolor='black', label='Bass Shaker BS250'),
         mpatches.Patch(facecolor=COLOR_CAJA, edgecolor='black', label='Caja electronica'),
+        mpatches.Patch(facecolor=COLOR_ZAPATILLA, edgecolor='black', label='Zapatilla 220V (3 tomas)'),
     ]
     ax.legend(handles=legend_elements, loc='upper left', fontsize=8,
               frameon=True, fancybox=True, shadow=True)
@@ -1032,6 +1104,7 @@ def generar_vista_iso_cenital():
         mpatches.Patch(facecolor=COLOR_EXCITER, edgecolor='black', label='Exciters L/R'),
         mpatches.Patch(facecolor=COLOR_BASS_SHAKER, edgecolor='black', label='Bass Shaker BS250'),
         mpatches.Patch(facecolor=COLOR_CAJA, edgecolor='black', label='Caja electronica'),
+        mpatches.Patch(facecolor=COLOR_ZAPATILLA, edgecolor='black', label='Zapatilla 220V (3 tomas)'),
     ]
     ax.legend(handles=legend_elements, loc='upper left', fontsize=8,
               frameon=True, fancybox=True, shadow=True)

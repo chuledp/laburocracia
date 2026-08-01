@@ -693,20 +693,22 @@ def generar_vista_elevacion():
                        label='Base acrilico (contorno transparente)'),
         mpatches.Patch(facecolor='none', edgecolor=COLOR_CARTEL_NEON, linewidth=2,
                        label='Neon LED (frente hacia colchon)'),
+        mpatches.Patch(facecolor=COLOR_ZAPATILLA, edgecolor='black',
+                       label='Zapatilla 220V (en el piso)'),
     ]
     ax.legend(handles=legend_elements, loc='upper right', fontsize=9,
               frameon=True, fancybox=True, shadow=True)
 
-    # Nota técnica
-    ax.text(0.02, 0.02,
+    # Nota técnica (ubicada abajo a la derecha con transparencia para no tapar componentes)
+    ax.text(0.98, 0.02,
             'Escala: medidas en metros | Obra: "LABUROCRACIA"\n'
             'Cartel a 2.00m del piso, centrado sobre cabecera,\n'
             'corrido 10cm hacia el interior del colchon.\n'
             'Vista de perfil: espesor ~3cm (acrilico + neon).',
-            transform=ax.transAxes, fontsize=7, va='bottom', ha='left',
-            color='#888888', style='italic',
+            transform=ax.transAxes, fontsize=7, va='bottom', ha='right',
+            color='#555555', style='italic',
             bbox=dict(boxstyle='round,pad=0.4', facecolor='#F8F8F8',
-                      edgecolor='#DDDDDD'))
+                      edgecolor='#DDDDDD', alpha=0.7))
 
     plt.tight_layout()
     plt.savefig('vista_2_elevacion_laburocracia.png', dpi=DPI_GUARDADO,

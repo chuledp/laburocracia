@@ -43,14 +43,14 @@ DPI_GUARDADO = 300
 # ==============================================================================
 # MEDIDAS DE LA OBRA (en metros)
 # ==============================================================================
-# Sommier
+# Sommier (2 Plazas: 1.40m x 1.90m)
 SOMMIER_LARGO = 1.90    # m (eje Y en planta)
-SOMMIER_ANCHO = 1.00    # m (eje X en planta)
+SOMMIER_ANCHO = 1.40    # m (eje X en planta)
 SOMMIER_ALTO  = 0.30    # m
 
 # Colchón (mismas dimensiones de planta que el sommier)
 COLCHON_LARGO = 1.90    # m
-COLCHON_ANCHO = 1.00    # m
+COLCHON_ANCHO = 1.40    # m
 COLCHON_ALTO  = 0.25    # m
 
 # Letrero neón LED
